@@ -43,15 +43,5 @@ configured and will try to install the agent.
     ansible_winrm_transport: kerberos
     ansible_winrm_server_cert_validation: ignore
   roles:
-    - role: ims.premigration-windows-static-ip
+    - role: fdupont_redhat.ims_premigration_windows
 ```
-
-License
--------
-
-GPLv3
-
-Author Information
-------------------
-
-Fabien Dupont <fdupont@redhat.com>
