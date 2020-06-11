@@ -24,7 +24,8 @@ The role behaviour can be influenced via some variables that are mainly
 wrappers for the module used in the role. ***By default, no variable is set***.
 
 The only variables that you may want to customize are the ones configuring
-the Ansible WinRM connection. See 
+the Ansible WinRM connection.See
+[Windows Remote Management > Inventory Options](https://docs.ansible.com/ansible/latest/user_guide/windows_winrm.html#inventory-options)
 
 Example Playbook
 ----------------
