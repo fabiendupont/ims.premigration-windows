@@ -3,7 +3,7 @@ galaxy_info:
   author: Fabien Dupont <fdupont@redhat.com>
   description: This role configures the Windows virtual machine for migration.
   company: Red Hat
-  license: GPLv3
+  license: licencse (Apache)
   min_ansible_version: 2.4
   platforms:
     - name: EL

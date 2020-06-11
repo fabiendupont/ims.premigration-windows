@@ -9,11 +9,11 @@
   When migrating a Windows virtual machine from VMware to KVM, the drivers
   are modified by virt-v2v. The consequence is that the new network adapters
   are created with the same MAC addresses as the original network adapters.
-  With Windows, the new network adapters IP configuration is not bound to the
+  With Windows, the new network adapters IP configuration is not bound to
   the MAC addresses, so the new network adapters are not configured, so the
   virtual machine is unreachable.
 
-  Another potential hickup is that drives may be ordered differently after the
+  Another potential hiccup is that drives may be ordered differently after the
   migration. This may lead to having wrong drive letters and programs not being
   able to find their data. 
 
