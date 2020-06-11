@@ -1,5 +1,5 @@
-IMS - Pre Migration - Preserve Windows NICs and Disks
-=====================================================
+IMS - Pre Migration - Windows
+=============================
 
 This role configures the Windows virtual machine for migration.
 For that, it generates a PowerShell script that:
