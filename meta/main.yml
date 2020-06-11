@@ -1,5 +1,5 @@
 galaxy_info:
-  role_name: fdupont_redhat.ims_premigration_windows
+  role_name: ims_premigration_windows
   author: Fabien Dupont <fdupont@redhat.com>
   description: This role configures the Windows virtual machine for migration.
   company: Red Hat
