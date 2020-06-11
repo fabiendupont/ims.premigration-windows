@@ -1,0 +1,8 @@
+---
+- name: "Copy PowerShell script file"
+  win_copy:
+    src: "files/pre-migrate.ps1"
+    dest: 'C:\Windows\Temp\'
+
+- name: "Run PowerShell command"
+  win_command: 'powershell.exe -ExecutionPolicy ByPass -File C:\Windows\Temp\pre-migrate.ps1'
