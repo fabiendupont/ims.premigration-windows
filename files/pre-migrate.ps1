@@ -36,12 +36,12 @@
   script runs it. This avoids creating another scheduled task.
 
 .NOTES
-  Version:        1.0
+  Version:        1.1
   Author:         Fabien Dupont <fdupont@redhat.com>
   Purpose/Change: Extract system configuration during premigration
 #>
 
-$scriptDir = "C:\Program Files\Guestfs\Firstboot\scripts"
+$scriptDir = $env:SystemDrive + "\Program Files\Guestfs\Firstboot\scripts"
 $restoreScriptFile = $scriptDir + "\9999-restore_config.ps1"
 $firstbootScriptFile = $scriptDir + "\9999-restore_config.bat"
 
@@ -88,6 +88,7 @@ Get-NetAdapter | ForEach-Object {
     Write-Output ("Write-Output ('  - Assign the IP addresses and netmask to the Red Hat network adapter') >> `$logFile") >> $restoreScriptFile
     Get-NetIPAddress -InterfaceIndex $_.InterfaceIndex | Where-Object { $_.PrefixOrigin -like "Manual" -or $_.SuffixOrigin -like "Manual"} | ForEach-Object {
         Write-Output ("Write-Output ('    - IP address: " + $_.IPaddress + "  - PrefixLength: " + $_.PrefixLength + "') >> `$logFile") >> $restoreScriptFile
+        Write-Output( "Remove-NetIPAddress " + $_.IPAddress + " -confirm:`$false") >> $restoreScriptFile
         Write-Output( "New-NetIPAddress -InterfaceIndex `$ifi -IPAddress '" + $_.IPAddress + "' -Prefixlength " + $_.PrefixLength) >> $restoreScriptFile
     }
     Write-Output ("") >> $restoreScriptFile
@@ -124,9 +125,10 @@ Write-Output ("") >> $restoreScriptFile
 # Generate the script section to remove the access path on all partitions
 # but SystemDrive
 Write-Output ("# Remove the access path on all partitions but SystemDrive") >> $restoreScriptFile
+$a = (Get-Item env:SystemDrive).Value.substring(0,1)
 Write-Output ("`$a = (Get-Item env:SystemDrive).Value.substring(0,1)") >> $restoreScriptFile
 Write-Output ("Write-Output('Remove the partition access path on all partitions but SystemDrive (" + $a +")') >> `$logFile") >> $restoreScriptFile
-Write-Output ("Get-Partition | Where { `$_.DriveLetter -notlike `$a -and `$_.DriveLetter.length -gt 0 } | % {") >> $restoreScriptFile
+Write-Output ("Get-Partition | Where { `$_.DriveLetter -notlike `$a -and `$_.DriveLetter -ne [char] `"``0`" } | % {") >> $restoreScriptFile
 Write-Output ("    if ([string]::IsNullOrWhiteSpace(`$_.DriveLetter)) {") >> $restoreScriptFile
 Write-Output ("        Write-Output ('  - DiskNumber: ' + `$_.DiskNumber + ' - PartitionNumber: ' + `$_.PartitionNumber + ' - No AccessPath. Skipping') >> `$logFile") >> $restoreScriptFile
 Write-Output ("    }") >> $restoreScriptFile
@@ -139,18 +141,23 @@ Write-Output ("Write-Output ('') >> `$logFile") >> $restoreScriptFile
 Write-Output ("") >> $restoreScriptFile
 
 # Gnerate the script section to restore the drive letters
+# DriveType 3 = Local disk
+# Information about over drive types can be found here https://learn.microsoft.com/en-us/previous-versions/windows/desktop/legacy/aa394515(v=vs.85)
 Write-Output ("# Restore drive letters") >> $restoreScriptFile
 Write-Output ("Write-Output ('Restore drive letters') >> `$logFile") >> $restoreScriptFile
-Get-Volume | ForEach-Object {
-    if ($_.FileSystemLabel -ne "System Reserved") {
+Get-WmiObject -Class Win32_Volume | ForEach-Object {
+    if ($_.Label -ne "System Reserved" -and $_.DriveType -eq 3) {
         if ([string]::IsNullOrWhiteSpace($_.DriveLetter)) {
-            Write-Output ("Write-Output ('  - DeviceId: " + $_.ObjectId + " - No DriveLetter. Skipping.') >> `$logFile") >> $restoreScriptFile
+            Write-Output ("Write-Output ('  - DeviceId: " + $_.deviceID + " - No DriveLetter. Skipping.') >> `$logFile") >> $restoreScriptFile
+        }
+        elseif ($_.DriveLetter -eq $env:SystemDrive){
+            Write-Output ("Write-Output ('  - DeviceId: " + $_.deviceID + " - Is system drive. Skipping.') >> `$logFile")  >> $restoreScriptFile
         }
         else {
-            Write-Output ("Write-Output ('  - DeviceId: " + $_.ObjectId + " - DriveLetter: " + $_.DriveLetter + ":') >> `$logFile") >> $restoreScriptFile
-            $escObjectId = $_.ObjectId -replace "\\", "\\"
-            Write-Output ("`$wmiObject = Get-WmiObject -Class Win32_Volume -Filter `"DeviceId='" + $escObjectId + "'`"") >> $restoreScriptFile
-            Write-Output ("`$wmiObject.DriveLetter = '" + $_.DriveLetter + ":'") >> $restoreScriptFile
+            Write-Output ("Write-Output ('  - DeviceId: " + $_.deviceID + " - DriveLetter: " + $_.DriveLetter + "') >> `$logFile") >> $restoreScriptFile
+            $escDeviceID = $_.deviceID -replace "\\", "\\"
+            Write-Output ("`$wmiObject = Get-WmiObject -Class Win32_Volume -Filter `"DeviceId='" + $escDeviceID + "'`"") >> $restoreScriptFile
+            Write-Output ("`$wmiObject.DriveLetter = '" + $_.DriveLetter + "'") >> $restoreScriptFile
             Write-Output ("`$wmiObject.Put()") >> $restoreScriptFile
             Write-Output ("") >> $restoreScriptFile
         }
